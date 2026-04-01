@@ -1,0 +1,12 @@
+name = "cahwindow-b2b-dist"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+pages_build_output_dir = ".vercel/output/static"
+
+[vars]
+# 프로덕션 환경변수는 Cloudflare Pages 대시보드에서 설정
+# NEXT_PUBLIC_SUPABASE_URL =
+# NEXT_PUBLIC_SUPABASE_ANON_KEY =
+# NEXT_PUBLIC_AUTH_API_URL =
+# NEXT_PUBLIC_COST_API_URL =
