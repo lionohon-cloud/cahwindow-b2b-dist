@@ -6,7 +6,7 @@ import { fmtKRW } from '@/lib/calc';
 const BRAND_GRADES: Record<string, string[]> = {
   LX:     ['프레스티지', '시그니처', '에코lite'],
   홈윈도우: ['프레스티지', '시그니처', '에코lite'],
-  KCC:    ['프레스티지', '시그니처', 'GR'],
+  KCC:    ['프레스티지', '시그니처', '에코lite'],
 };
 
 const BRAND_COLORS: Record<string, string> = {

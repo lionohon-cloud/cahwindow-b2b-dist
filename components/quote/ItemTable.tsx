@@ -110,10 +110,13 @@ export default function ItemTable({ items, setItems, itemPrices, selectedBrands 
                       onChange={(e) => update(item.id, 'h', Number(e.target.value))} />
                   </td>
                   <td>
-                    <input className="input" type="number" min={1} style={{ padding: '5px 7px' }}
+                    <input className="input" type="text" inputMode="numeric" style={{ padding: '5px 7px' }}
                       value={item.qty || ''}
-                      onChange={(e) => update(item.id, 'qty', Number(e.target.value))}
-                      onBlur={(e) => { if (!Number(e.target.value) || Number(e.target.value) < 1) update(item.id, 'qty', 1); }} />
+                      onChange={(e) => {
+                        const raw = e.target.value.replace(/\D/g, '');
+                        update(item.id, 'qty', raw === '' ? 0 : parseInt(raw, 10));
+                      }}
+                      onBlur={() => { if (!item.qty || item.qty < 1) update(item.id, 'qty', 1); }} />
                   </td>
                   <td style={{ textAlign: 'center', fontWeight: 600, color: jp ? 'var(--color-text)' : 'var(--color-text-faint)', fontSize: 13 }}>
                     {jp || '-'}
