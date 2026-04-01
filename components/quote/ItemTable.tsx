@@ -112,7 +112,8 @@ export default function ItemTable({ items, setItems, itemPrices, selectedBrands 
                   <td>
                     <input className="input" type="number" min={1} style={{ padding: '5px 7px' }}
                       value={item.qty || ''}
-                      onChange={(e) => update(item.id, 'qty', Math.max(1, Number(e.target.value) || 1))} />
+                      onChange={(e) => update(item.id, 'qty', Number(e.target.value))}
+                      onBlur={(e) => { if (!Number(e.target.value) || Number(e.target.value) < 1) update(item.id, 'qty', 1); }} />
                   </td>
                   <td style={{ textAlign: 'center', fontWeight: 600, color: jp ? 'var(--color-text)' : 'var(--color-text-faint)', fontSize: 13 }}>
                     {jp || '-'}

@@ -22,7 +22,8 @@ export async function GET(_req: NextRequest) {
     if (!gasRes.ok) throw new Error(`GAS 응답 오류: ${gasRes.status}`);
 
     const gasData = await gasRes.json();
-    const rawPdCost: PdCostTable | null = gasData?.pdCost ?? null;
+    // GAS 응답 키: costData (pdCost 아님)
+    const rawPdCost: PdCostTable | null = gasData?.costData ?? null;
 
     if (!rawPdCost) {
       return NextResponse.json({ success: false, error: '단가 데이터 없음' }, { status: 502 });
@@ -39,14 +40,16 @@ export async function GET(_req: NextRequest) {
     const b2bMarkup = (admVal?.b2bMarkup as number) ?? 145;
     const scale = b2bMarkup / 100;
 
-    // 모든 가격 셀에 b2bMarkup 반영 (col[0] = jp 임계값이므로 유지)
+    // 모든 가격 셀에 b2bMarkup 반영
+    // row[0]은 헤더(문자열)이므로 그대로 유지, row[1+]에서 col[0]=jp임계값 유지, col[1+] 스케일링
     const scaledCost: PdCostTable = {};
     for (const brand of Object.keys(rawPdCost)) {
       scaledCost[brand] = {};
       for (const grade of Object.keys(rawPdCost[brand])) {
-        scaledCost[brand][grade] = rawPdCost[brand][grade].map((row) =>
-          row.map((val, i) => (i === 0 ? val : Math.round(val * scale))),
-        );
+        scaledCost[brand][grade] = rawPdCost[brand][grade].map((row, ri) => {
+          if (ri === 0) return row; // 헤더 행 그대로
+          return row.map((val, i) => (i === 0 ? val : Math.round((val as number) * scale)));
+        });
       }
     }
 
