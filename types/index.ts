@@ -126,6 +126,8 @@ export interface LinkInfoResponse {
     bgMk: Record<string, Record<string, number>>;
     distDefault: Record<string, unknown>;
   };
+  // b2bMarkup 적용 완료 단가표 (서버에서 스케일링, 배율값 미포함)
+  scaledCost: Record<string, Record<string, unknown[][]>> | null;
 }
 
 export interface SubmitRequestPayload {

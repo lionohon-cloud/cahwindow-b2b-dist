@@ -63,12 +63,9 @@ function QuoteContent() {
   useEffect(() => {
     if (!leaderId) { setLoading(false); return; }
 
-    const fetchInfo  = fetch(`/api/link-info?leader=${leaderId}&client=${clientId}`).then((r) => r.json());
-    const fetchCost  = fetch('/api/cost-data').then((r) => r.json());
-
-    Promise.allSettled([fetchInfo, fetchCost]).then(([infoRes, costRes]) => {
-      if (infoRes.status === 'fulfilled') {
-        const data: LinkInfoResponse = infoRes.value;
+    fetch(`/api/link-info?leader=${leaderId}&client=${clientId}`)
+      .then((r) => r.json())
+      .then((data: LinkInfoResponse) => {
         setLinkInfo(data);
         if (data.client) {
           setClientName(data.client.name);
@@ -77,12 +74,11 @@ function QuoteContent() {
           setClientPhone(data.client.phone ?? '');
           setClientEmail(data.client.email ?? '');
         }
-      }
-      if (costRes.status === 'fulfilled' && costRes.value?.success) {
-        setScaledCost(costRes.value.scaledCost);
-      }
-      setLoading(false);
-    });
+        if (data.scaledCost) {
+          setScaledCost(data.scaledCost as PdCostTable);
+        }
+      })
+      .finally(() => setLoading(false));
   }, [leaderId, clientId]);
 
   // 품목·등급 변경 시 가격 재계산 (디바운스 300ms)

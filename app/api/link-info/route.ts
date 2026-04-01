@@ -60,19 +60,49 @@ export async function GET(req: NextRequest) {
       .single();
 
     const adm = configRow?.value ?? { b2bMarkup: 145, bgMk: {}, distDefault: {} };
+    const b2bMarkup: number = (adm.b2bMarkup as number) ?? 145;
+    const scale = b2bMarkup / 100;
 
-    // leader 정보는 클라이언트 세션에서 오므로 여기서는 null 반환
-    // (대시보드 로그인 시 세션에 저장된 정보 활용)
+    // GAS 단가표 가져오기 + b2bMarkup 서버 적용
+    let scaledCost: Record<string, Record<string, unknown[][]>> | null = null;
+    const costUrl = process.env.NEXT_PUBLIC_COST_API_URL;
+    if (costUrl) {
+      try {
+        const gasRes = await fetch(costUrl, { redirect: 'follow' });
+        if (gasRes.ok) {
+          const gasData = await gasRes.json() as { costData?: Record<string, Record<string, unknown[][]>> };
+          const rawPdCost = gasData?.costData ?? null;
+          if (rawPdCost) {
+            scaledCost = {};
+            for (const brand of Object.keys(rawPdCost)) {
+              scaledCost[brand] = {};
+              for (const grade of Object.keys(rawPdCost[brand])) {
+                scaledCost[brand][grade] = rawPdCost[brand][grade].map((row, ri) => {
+                  if (ri === 0) return row; // 헤더 행
+                  return (row as (string | number)[]).map((val, i) =>
+                    i === 0 ? val : Math.round((val as number) * scale),
+                  );
+                });
+              }
+            }
+          }
+        }
+      } catch {
+        // 단가 로드 실패 시 null 반환 (견적 기능만 비활성화)
+      }
+    }
+
     return NextResponse.json({
       success: true,
       leader: null,
       client: clientData,
       coupons,
       adm: {
-        // B2B 할증률은 절대 클라이언트에 노출하지 않음
+        // b2bMarkup 수치는 절대 노출하지 않음 — scaledCost에 이미 반영됨
         bgMk: adm.bgMk ?? {},
         distDefault: adm.distDefault ?? {},
       },
+      scaledCost,
     });
   } catch (err) {
     console.error('[link-info]', err);
