@@ -1,19 +1,21 @@
 'use client';
 
-import { useEffect, useState, useCallback, Suspense } from 'react';
+import { useEffect, useState, useCallback, Suspense, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import type { QuoteItem, LinkInfoResponse } from '@/types';
 import { formatPhone, formatBizNo } from '@/lib/utils';
+import { calcAllPrices } from '@/lib/calc';
+import type { PdCostTable, QuotePrices } from '@/lib/calc';
 import ItemTable from '@/components/quote/ItemTable';
 import BrandCards from '@/components/quote/BrandCards';
 import SiteInfoSection from '@/components/quote/SiteInfoSection';
+import SpecTable from '@/components/quote/SpecTable';
 
-const BRANDS = ['LX', '홈윈도우', 'KCC'] as const;
 const DEFAULT_GRADES: Record<string, string> = { LX: '시그니처', 홈윈도우: '시그니처', KCC: '시그니처' };
 
 export default function QuotePage() {
   return (
-    <Suspense fallback={<div style={{display:'flex',alignItems:'center',justifyContent:'center',minHeight:'100vh'}}><span className="spinner"/></div>}>
+    <Suspense fallback={<div style={{ display:'flex', alignItems:'center', justifyContent:'center', minHeight:'100vh' }}><span className="spinner" /></div>}>
       <QuoteContent />
     </Suspense>
   );
@@ -24,39 +26,49 @@ function QuoteContent() {
   const leaderId = searchParams.get('leader') ?? '';
   const clientId = searchParams.get('client') ?? '';
 
-  const [linkInfo, setLinkInfo] = useState<LinkInfoResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [submitted, setSubmitted] = useState(false);
+  const [linkInfo, setLinkInfo]     = useState<LinkInfoResponse | null>(null);
+  const [scaledCost, setScaledCost] = useState<PdCostTable | null>(null);
+  const [prices, setPrices]         = useState<QuotePrices | null>(null);
+  const [loading, setLoading]       = useState(true);
+  const [submitted, setSubmitted]   = useState(false);
   const [submittedId, setSubmittedId] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError]           = useState('');
 
   // 폼 상태
-  const [clientName, setClientName] = useState('');
-  const [clientPhone, setClientPhone] = useState('');
-  const [clientCeo, setClientCeo] = useState('');
+  const [clientName, setClientName]       = useState('');
+  const [clientPhone, setClientPhone]     = useState('');
+  const [clientCeo, setClientCeo]         = useState('');
   const [clientContact, setClientContact] = useState('');
-  const [clientEmail, setClientEmail] = useState('');
-  const [clientBizNo, setClientBizNo] = useState('');
-  const [constType, setConstType] = useState('시공포함');
-  const [resType, setResType] = useState('거주세대');
-  const [siteName, setSiteName] = useState('');
-  const [siteAddress, setSiteAddress] = useState('');
-  const [siteDetail, setSiteDetail] = useState('');
-  const [siteFloor, setSiteFloor] = useState('');
-  const [siteSido, setSiteSido] = useState('');
-  const [wishDate, setWishDate] = useState('');
-  const [memo, setMemo] = useState('');
-  const [items, setItems] = useState<QuoteItem[]>([
+  const [clientEmail, setClientEmail]     = useState('');
+  const [clientBizNo, setClientBizNo]     = useState('');
+  const [constType, setConstType]         = useState('시공포함');
+  const [resType, setResType]             = useState('거주세대');
+  const [siteName, setSiteName]           = useState('');
+  const [siteAddress, setSiteAddress]     = useState('');
+  const [siteDetail, setSiteDetail]       = useState('');
+  const [siteFloor, setSiteFloor]         = useState('');
+  const [siteSido, setSiteSido]           = useState('');
+  const [wishDate, setWishDate]           = useState('');
+  const [memo, setMemo]                   = useState('');
+  const [items, setItems]   = useState<QuoteItem[]>([
     { id: 1, loc: '', nm: '', w: 0, h: 0, qty: 1, nt: '' },
   ]);
   const [grades, setGrades] = useState<Record<string, string>>(DEFAULT_GRADES);
 
+  // 가격 재계산 디바운스 타이머
+  const calcTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // 초기 데이터 로드
   useEffect(() => {
     if (!leaderId) { setLoading(false); return; }
-    fetch(`/api/link-info?leader=${leaderId}&client=${clientId}`)
-      .then((r) => r.json())
-      .then((data: LinkInfoResponse) => {
+
+    const fetchInfo  = fetch(`/api/link-info?leader=${leaderId}&client=${clientId}`).then((r) => r.json());
+    const fetchCost  = fetch('/api/cost-data').then((r) => r.json());
+
+    Promise.allSettled([fetchInfo, fetchCost]).then(([infoRes, costRes]) => {
+      if (infoRes.status === 'fulfilled') {
+        const data: LinkInfoResponse = infoRes.value;
         setLinkInfo(data);
         if (data.client) {
           setClientName(data.client.name);
@@ -65,10 +77,26 @@ function QuoteContent() {
           setClientPhone(data.client.phone ?? '');
           setClientEmail(data.client.email ?? '');
         }
-      })
-      .catch(() => {})
-      .finally(() => setLoading(false));
+      }
+      if (costRes.status === 'fulfilled' && costRes.value?.success) {
+        setScaledCost(costRes.value.scaledCost);
+      }
+      setLoading(false);
+    });
   }, [leaderId, clientId]);
+
+  // 품목·등급 변경 시 가격 재계산 (디바운스 300ms)
+  useEffect(() => {
+    if (!scaledCost) return;
+    if (calcTimer.current) clearTimeout(calcTimer.current);
+    calcTimer.current = setTimeout(() => {
+      const bgMk   = linkInfo?.adm?.bgMk ?? {};
+      const cpns   = (linkInfo?.coupons ?? []).map((c) => ({ rate: c.rate, amt: c.amt }));
+      const result = calcAllPrices(items, grades, bgMk, scaledCost, cpns);
+      setPrices(result);
+    }, 300);
+    return () => { if (calcTimer.current) clearTimeout(calcTimer.current); };
+  }, [items, grades, scaledCost, linkInfo]);
 
   const handleSubmit = useCallback(async () => {
     if (!clientName.trim()) { setError('거래처명을 입력해 주세요.'); return; }
@@ -146,7 +174,8 @@ function QuoteContent() {
     );
   }
 
-  const isReadonly = !!clientId;
+  const isReadonly     = !!clientId;
+  const selectedBrands = Object.entries(grades).filter(([, g]) => !!g).map(([b]) => b);
 
   return (
     <div style={{ minHeight:'100vh', paddingBottom:40 }}>
@@ -171,7 +200,7 @@ function QuoteContent() {
           <div className="section-title">① 거래처 정보</div>
           <div className="form-row" style={{ marginBottom:10 }}>
             <div className="form-group">
-              <label>거래처명 <span style={{color:'var(--color-red)'}}>*</span></label>
+              <label>거래처명 <span style={{ color:'var(--color-red)' }}>*</span></label>
               <input className="input" value={clientName} readOnly={isReadonly}
                 onChange={(e) => setClientName(e.target.value)} placeholder="예) 한솔인테리어" />
             </div>
@@ -219,11 +248,24 @@ function QuoteContent() {
           wishDate={wishDate} setWishDate={setWishDate}
         />
 
-        {/* ③ 브랜드 / 등급 선택 */}
-        <BrandCards grades={grades} setGrades={setGrades} />
+        {/* ③ 브랜드 / 등급 선택 + 가견적 금액 */}
+        <BrandCards
+          grades={grades}
+          setGrades={setGrades}
+          prices={prices}
+          coupons={linkInfo?.coupons}
+        />
 
         {/* ④ 품목 */}
-        <ItemTable items={items} setItems={setItems} />
+        <ItemTable
+          items={items}
+          setItems={setItems}
+          itemPrices={prices?.itemPrices}
+          selectedBrands={selectedBrands}
+        />
+
+        {/* 창호 사양 비교표 */}
+        <SpecTable grades={grades} />
 
         {/* ⑤ 메모 */}
         <div className="card">
@@ -242,7 +284,7 @@ function QuoteContent() {
         {/* 제출 버튼 */}
         <button className="btn btn-primary btn-full btn-lg"
           onClick={handleSubmit} disabled={submitting}>
-          {submitting ? <><span className="spinner" style={{width:16,height:16}} /> 제출 중...</> : '📋 가견적 신청하기'}
+          {submitting ? <><span className="spinner" style={{ width:16, height:16 }} /> 제출 중...</> : '📋 가견적 신청하기'}
         </button>
 
       </div>

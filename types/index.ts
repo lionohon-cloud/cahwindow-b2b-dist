@@ -122,8 +122,8 @@ export interface LinkInfoResponse {
   } | null;
   coupons: Coupon[];
   adm: {
-    b2bMarkup: number;
-    bgMk: Record<string, unknown>;
+    // b2bMarkup 은 서버 전용 — 이 응답에 포함되지 않음
+    bgMk: Record<string, Record<string, number>>;
     distDefault: Record<string, unknown>;
   };
 }
