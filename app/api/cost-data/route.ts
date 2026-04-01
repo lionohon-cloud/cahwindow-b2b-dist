@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import type { PdCostTable } from '@/lib/calc';
 
-export const runtime = 'edge';
-
 /**
  * GET /api/cost-data
  * COST_API_URL(GAS)에서 단가표를 가져와 b2bMarkup을 서버에서 적용하고 반환.
@@ -19,6 +17,7 @@ export async function GET(_req: NextRequest) {
     // GAS 단가표 가져오기 (1시간 캐시)
     const gasRes = await fetch(costUrl, {
       headers: { 'Cache-Control': 'no-cache' },
+      redirect: 'follow',
     });
     if (!gasRes.ok) throw new Error(`GAS 응답 오류: ${gasRes.status}`);
 
