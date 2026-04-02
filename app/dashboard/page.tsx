@@ -64,7 +64,7 @@ export default function DashboardPage() {
               {t}
             </button>
           ))}
-          {user.team === 'admin' && (
+          {(user.team === 'admin' || user.team === '관리자') && (
             <button type="button" className={`tab ${tab === 'Admin' ? 'active' : ''}`} onClick={() => setTab('Admin')}>
               ⚙️ Admin
             </button>
@@ -84,7 +84,7 @@ export default function DashboardPage() {
         {tab === '쿠폰설정' && (
           <CouponSettings leaderId={user.loginId} />
         )}
-        {tab === 'Admin' && user.team === 'admin' && (
+        {tab === 'Admin' && (user.team === 'admin' || user.team === '관리자') && (
           <AdminPanel leaderId={user.loginId} />
         )}
       </div>
