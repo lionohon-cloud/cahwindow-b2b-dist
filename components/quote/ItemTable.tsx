@@ -2,7 +2,7 @@
 
 import type { QuoteItem } from '@/types';
 import type { ItemPrice } from '@/lib/calc';
-import { calcJP } from '@/lib/calc';
+import { calcJP, PRODUCT_OPTIONS } from '@/lib/calc';
 
 interface Props {
   items: QuoteItem[];
@@ -13,10 +13,6 @@ interface Props {
 
 let _nid = 2;
 
-const PRODUCT_OPTIONS = [
-  '', '일반창(미서기)', '시스템창', '발코니창', '미닫이문', '여닫이문',
-  '슬라이딩도어', '고정창', '환기창', '기타',
-];
 
 const BRAND_COLOR: Record<string, string> = {
   LX:     '#c41230',

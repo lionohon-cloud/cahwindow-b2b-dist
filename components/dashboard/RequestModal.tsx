@@ -3,7 +3,7 @@
 import type { QuoteRequest, RequestStatus } from '@/types';
 import { formatDateTime } from '@/lib/utils';
 
-const B2B_PROGRAM_URL = 'https://script.google.com/a/macros/cahwinow.com/s/AKfycbyQv1Imfy3gLjDu0nackkeNS0GDa5X5JEY0x2qa4YaEqUr-SQzCTraumRs0zVZcVXYUgw/exec';
+const B2B_PROGRAM_URL = '/sales-quote';
 
 interface Props {
   req: QuoteRequest;
