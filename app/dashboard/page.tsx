@@ -8,9 +8,11 @@ import RequestList from '@/components/dashboard/RequestList';
 import ClientManager from '@/components/dashboard/ClientManager';
 import LinkManager from '@/components/dashboard/LinkManager';
 import CouponSettings from '@/components/dashboard/CouponSettings';
+import AdminPanel from '@/components/dashboard/AdminPanel';
 
-const TABS = ['견적요청', '거래처관리', '배포링크', '쿠폰설정'] as const;
-type Tab = typeof TABS[number];
+const BASE_TABS = ['견적요청', '거래처관리', '배포링크', '쿠폰설정'] as const;
+type BaseTab = typeof BASE_TABS[number];
+type Tab = BaseTab | 'Admin';
 
 export default function DashboardPage() {
   const [user, setUser] = useState<SessionUser | null>(null);
@@ -53,7 +55,7 @@ export default function DashboardPage() {
       <div style={{ maxWidth:960, margin:'0 auto', padding:'24px 16px' }}>
         {/* 탭 */}
         <div className="tabs" style={{ marginBottom:24 }}>
-          {TABS.map((t) => (
+          {BASE_TABS.map((t) => (
             <button key={t} type="button" className={`tab ${tab === t ? 'active' : ''}`} onClick={() => setTab(t)}>
               {t === '견적요청' && '📋 '}
               {t === '거래처관리' && '🏢 '}
@@ -62,6 +64,11 @@ export default function DashboardPage() {
               {t}
             </button>
           ))}
+          {user.team === 'admin' && (
+            <button type="button" className={`tab ${tab === 'Admin' ? 'active' : ''}`} onClick={() => setTab('Admin')}>
+              ⚙️ Admin
+            </button>
+          )}
         </div>
 
         {/* 탭 콘텐츠 */}
@@ -76,6 +83,9 @@ export default function DashboardPage() {
         )}
         {tab === '쿠폰설정' && (
           <CouponSettings leaderId={user.loginId} />
+        )}
+        {tab === 'Admin' && user.team === 'admin' && (
+          <AdminPanel leaderId={user.loginId} />
         )}
       </div>
     </div>

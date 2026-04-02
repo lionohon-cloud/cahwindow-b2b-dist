@@ -112,5 +112,22 @@ CREATE TABLE IF NOT EXISTS config (
 -- 기본 adm 설정 삽입
 INSERT INTO config (key, value) VALUES (
   'adm',
-  '{"bgMk": {}, "distDefault": {}}'::jsonb
+  '{"b2bMarkup": 145, "bgMk": {}, "distDefault": {}}'::jsonb
 ) ON CONFLICT (key) DO NOTHING;
+
+-- 6. 쿠폰 마스터 테이블 (Admin 관리)
+CREATE TABLE IF NOT EXISTS coupons (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  coupon_id   TEXT UNIQUE NOT NULL,
+  name        TEXT NOT NULL,
+  type        TEXT NOT NULL DEFAULT 'rate',  -- 'rate' | 'amt'
+  rate        NUMERIC DEFAULT 0,
+  amt         INTEGER DEFAULT 0,
+  condition   TEXT,
+  valid_from  DATE,
+  valid_until DATE,
+  is_active   BOOLEAN DEFAULT TRUE,
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ DEFAULT NOW(),
+  CONSTRAINT valid_coupon_type CHECK (type IN ('rate', 'amt'))
+);
