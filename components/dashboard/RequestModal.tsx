@@ -125,6 +125,13 @@ export default function RequestModal({ req, leaderName, onClose, onStatusChange 
             </div>
           )}
 
+          {req.linked_quote_id && (
+            <div style={{ marginTop:12, padding:'8px 12px', background:'#f0fdf4', border:'1px solid #bbf7d0', borderRadius:6, fontSize:13, display:'flex', alignItems:'center', gap:8 }}>
+              <span style={{ color:'#16a34a', fontWeight:700 }}>✓ 배포완료</span>
+              <span style={{ color:'var(--color-text-muted)' }}>연동 견적번호:</span>
+              <span style={{ fontWeight:600, fontFamily:'monospace' }}>{req.linked_quote_id}</span>
+            </div>
+          )}
           <div style={{ marginTop:12, fontSize:12, color:'var(--color-text-faint)' }}>
             제출일시: {formatDateTime(req.submitted_at)} | 요청번호: {req.request_id}
           </div>

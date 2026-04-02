@@ -46,7 +46,7 @@ export default function ClientManager({ leaderId, leaderName }: Props) {
         headers: {
           'Content-Type': 'application/json',
           'x-leader-id': leaderId,
-          'x-leader-name': leaderName,
+          'x-leader-name': encodeURIComponent(leaderName),
         },
         body: JSON.stringify({ ...form, biz_no: form.biz_no.replace(/-/g, '') }),
       });

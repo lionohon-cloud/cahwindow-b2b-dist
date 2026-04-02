@@ -32,7 +32,7 @@ export default function LinkManager({ leaderId, leaderName }: Props) {
   async function createCommonLink() {
     const res = await fetch('/api/links', {
       method: 'POST',
-      headers: { 'x-leader-id': leaderId, 'x-leader-name': leaderName },
+      headers: { 'x-leader-id': leaderId, 'x-leader-name': encodeURIComponent(leaderName) },
     });
     const data = await res.json();
     if (data.success) { setCommonLink(data.link); showToast('공통 링크가 생성되었습니다.'); }

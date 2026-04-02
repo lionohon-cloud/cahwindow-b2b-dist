@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
 // POST /api/clients — 거래처 등록
 export async function POST(req: NextRequest) {
   const leaderId = req.headers.get('x-leader-id');
-  const leaderName = req.headers.get('x-leader-name') ?? '';
+  const leaderName = decodeURIComponent(req.headers.get('x-leader-name') ?? '');
   if (!leaderId) {
     return NextResponse.json({ success: false, error: '인증 필요' }, { status: 401 });
   }

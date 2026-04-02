@@ -84,9 +84,15 @@ export default function RequestList({ leaderId, leaderName }: Props) {
                   <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
                     <span style={{ fontWeight:700, fontSize:15 }}>{req.client_name}</span>
                     <span className={badgeClass(req.status)}>{req.status}</span>
-                    <span style={{ fontSize:11, color:'var(--color-text-faint)', background:'#f3f4f6', padding:'1px 7px', borderRadius:10 }}>
-                      가견적 요청
-                    </span>
+                    {req.linked_quote_id ? (
+                      <span style={{ fontSize:11, color:'#16a34a', background:'#f0fdf4', border:'1px solid #bbf7d0', padding:'1px 7px', borderRadius:10, fontWeight:600 }}>
+                        ✓ 배포완료
+                      </span>
+                    ) : (
+                      <span style={{ fontSize:11, color:'var(--color-text-faint)', background:'#f3f4f6', padding:'1px 7px', borderRadius:10 }}>
+                        가견적 요청
+                      </span>
+                    )}
                   </div>
                   <div style={{ fontSize:13, color:'var(--color-text-muted)' }}>
                     {req.site_name && <span>{req.site_name} · </span>}
