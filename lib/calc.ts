@@ -174,7 +174,7 @@ function applyCouponDisc(
  * @param coupons     - 적용 쿠폰 배열
  */
 export function calcAllPrices(
-  items: Array<{ nm: string; w: number; h: number; qty: number }>,
+  items: Array<{ nm: string; w: number; h: number; qty: number; manualPrice?: { lx: number; hw: number; kcc: number } }>,
   grades: Record<string, string>,
   bgMk: Record<string, Record<string, number>>,
   scaledCost: PdCostTable,
@@ -186,6 +186,16 @@ export function calcAllPrices(
 
   const totals = { lx: 0, hw: 0, kcc: 0 };
   const itemPrices: ItemPrice[] = items.map((it) => {
+    // 기타 품목: 직접입력 가격 사용
+    if (it.nm === '기타') {
+      const lx  = it.manualPrice?.lx  ?? 0;
+      const hw  = it.manualPrice?.hw  ?? 0;
+      const kcc = it.manualPrice?.kcc ?? 0;
+      totals.lx  += lx;
+      totals.hw  += hw;
+      totals.kcc += kcc;
+      return { jp: 0, lx, hw, kcc };
+    }
     const lxR  = calcOneItemBrand(it.nm, it.w, it.h, it.qty, 'LX',    gradeLX,  bgMk, scaledCost);
     const hwR  = calcOneItemBrand(it.nm, it.w, it.h, it.qty, '홈윈도우', gradeHW,  bgMk, scaledCost);
     const kccR = calcOneItemBrand(it.nm, it.w, it.h, it.qty, 'KCC',   gradeKCC, bgMk, scaledCost);

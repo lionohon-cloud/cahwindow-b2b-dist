@@ -51,6 +51,13 @@ export default function ItemTable({ items, setItems, itemPrices, selectedBrands 
     setItems(items.map((i) => (i.id === id ? { ...i, [field]: value } : i)));
   }
 
+  function updateManualPrice(id: number, key: 'lx' | 'hw' | 'kcc', value: number) {
+    setItems(items.map((i) => i.id === id
+      ? { ...i, manualPrice: { lx: 0, hw: 0, kcc: 0, ...i.manualPrice, [key]: value } }
+      : i
+    ));
+  }
+
   // 가격 표시 브랜드: 선택된 브랜드 중 최대 3개
   const priceBrands = selectedBrands.filter((b) => BRAND_PRICE_KEY[b]);
 
@@ -80,35 +87,74 @@ export default function ItemTable({ items, setItems, itemPrices, selectedBrands 
           </thead>
           <tbody>
             {items.map((item, idx) => {
-              const jp = calcJP(item.w, item.h);
+              const isCustom = item.nm === '기타';
+              const jp = isCustom ? 0 : calcJP(item.w, item.h);
               const ip = itemPrices?.[idx];
               return (
                 <tr key={item.id}>
+                  {/* 위치 */}
                   <td>
                     <input className="input" style={{ padding: '5px 7px' }}
                       value={item.loc}
                       onChange={(e) => update(item.id, 'loc', e.target.value)}
                       placeholder="거실" />
                   </td>
+
+                  {/* 품명 */}
                   <td>
-                    <select className="select" style={{ padding: '5px 7px' }}
-                      value={item.nm}
-                      onChange={(e) => update(item.id, 'nm', e.target.value)}>
-                      {PRODUCT_OPTIONS.map((o) => (
-                        <option key={o} value={o}>{o || '-- 선택 --'}</option>
-                      ))}
-                    </select>
+                    {isCustom ? (
+                      <div style={{ display: 'flex', gap: 3 }}>
+                        <button type="button"
+                          title="품목 선택으로 돌아가기"
+                          onClick={() => update(item.id, 'nm', '')}
+                          style={{ background: 'none', border: '1px solid #e5e7eb', borderRadius: 4, cursor: 'pointer', padding: '4px 6px', fontSize: 12, color: 'var(--color-text-muted)', flexShrink: 0 }}>
+                          ←
+                        </button>
+                        <input className="input" style={{ padding: '5px 7px', flex: 1 }}
+                          value={item.customNm ?? ''}
+                          onChange={(e) => update(item.id, 'customNm', e.target.value)}
+                          placeholder="품명 직접입력" />
+                      </div>
+                    ) : (
+                      <select className="select" style={{ padding: '5px 7px' }}
+                        value={item.nm}
+                        onChange={(e) => update(item.id, 'nm', e.target.value)}>
+                        {PRODUCT_OPTIONS.map((o) => (
+                          <option key={o} value={o}>{o || '-- 선택 --'}</option>
+                        ))}
+                      </select>
+                    )}
                   </td>
+
+                  {/* 너비 */}
                   <td>
-                    <input className="input" type="number" min={0} style={{ padding: '5px 7px' }}
-                      value={item.w || ''}
-                      onChange={(e) => update(item.id, 'w', Number(e.target.value))} />
+                    {isCustom ? (
+                      <span style={{ display: 'block', textAlign: 'center', color: 'var(--color-text-faint)' }}>-</span>
+                    ) : (
+                      <input className="input" type="text" inputMode="numeric" pattern="[0-9]*" style={{ padding: '5px 7px' }}
+                        value={item.w || ''}
+                        onChange={(e) => {
+                          const raw = e.target.value.replace(/\D/g, '');
+                          update(item.id, 'w', raw === '' ? 0 : parseInt(raw, 10));
+                        }} />
+                    )}
                   </td>
+
+                  {/* 높이 */}
                   <td>
-                    <input className="input" type="number" min={0} style={{ padding: '5px 7px' }}
-                      value={item.h || ''}
-                      onChange={(e) => update(item.id, 'h', Number(e.target.value))} />
+                    {isCustom ? (
+                      <span style={{ display: 'block', textAlign: 'center', color: 'var(--color-text-faint)' }}>-</span>
+                    ) : (
+                      <input className="input" type="text" inputMode="numeric" pattern="[0-9]*" style={{ padding: '5px 7px' }}
+                        value={item.h || ''}
+                        onChange={(e) => {
+                          const raw = e.target.value.replace(/\D/g, '');
+                          update(item.id, 'h', raw === '' ? 0 : parseInt(raw, 10));
+                        }} />
+                    )}
                   </td>
+
+                  {/* 수량 */}
                   <td>
                     <input className="input" type="text" inputMode="numeric" style={{ padding: '5px 7px' }}
                       value={item.qty || ''}
@@ -118,11 +164,29 @@ export default function ItemTable({ items, setItems, itemPrices, selectedBrands 
                       }}
                       onBlur={() => { if (!item.qty || item.qty < 1) update(item.id, 'qty', 1); }} />
                   </td>
+
+                  {/* 자평 */}
                   <td style={{ textAlign: 'center', fontWeight: 600, color: jp ? 'var(--color-text)' : 'var(--color-text-faint)', fontSize: 13 }}>
-                    {jp || '-'}
+                    {isCustom ? '-' : (jp || '-')}
                   </td>
+
+                  {/* 가격 열 */}
                   {showPrice && priceBrands.map((b) => {
                     const key = BRAND_PRICE_KEY[b];
+                    if (isCustom) {
+                      const val = item.manualPrice?.[key] ?? 0;
+                      return (
+                        <td key={b} style={{ padding: '3px 4px' }}>
+                          <input className="input" type="text" inputMode="numeric" style={{ padding: '4px 6px', textAlign: 'right', fontSize: 12, color: BRAND_COLOR[b] }}
+                            value={val || ''}
+                            onChange={(e) => {
+                              const raw = e.target.value.replace(/\D/g, '');
+                              updateManualPrice(item.id, key, raw === '' ? 0 : parseInt(raw, 10));
+                            }}
+                            placeholder="직접입력" />
+                        </td>
+                      );
+                    }
                     const amt = ip?.[key] ?? 0;
                     return (
                       <td key={b} style={{ textAlign: 'right', fontSize: 12, color: amt ? BRAND_COLOR[b] : 'var(--color-text-faint)' }}>
@@ -130,12 +194,16 @@ export default function ItemTable({ items, setItems, itemPrices, selectedBrands 
                       </td>
                     );
                   })}
+
+                  {/* 메모 */}
                   <td>
                     <input className="input" style={{ padding: '5px 7px' }}
                       value={item.nt ?? ''}
                       onChange={(e) => update(item.id, 'nt', e.target.value)}
                       placeholder="메모" />
                   </td>
+
+                  {/* 삭제 */}
                   <td style={{ textAlign: 'center' }}>
                     <button type="button" onClick={() => removeRow(item.id)}
                       style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--color-text-faint)', fontSize: 16 }}>

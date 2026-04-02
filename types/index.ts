@@ -66,11 +66,13 @@ export interface CouponSetting {
 export interface QuoteItem {
   id: number;
   loc: string;   // 위치
-  nm: string;    // 품명
+  nm: string;    // 품명 ('기타'이면 customNm에 실제명 저장)
+  customNm?: string;  // nm==='기타'일 때 사용자 입력 품명
   w: number;     // 너비 (mm)
   h: number;     // 높이 (mm)
   qty: number;   // 수량
   nt?: string;   // 메모
+  manualPrice?: { lx: number; hw: number; kcc: number }; // 기타 품목 직접입력 가격
 }
 
 // ─── 견적요청 ─────────────────────────────────────────────────────
