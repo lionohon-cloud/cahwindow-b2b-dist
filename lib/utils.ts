@@ -89,3 +89,27 @@ export function buildDistUrl(
 export async function copyToClipboard(text: string): Promise<void> {
   await navigator.clipboard.writeText(text);
 }
+
+// ─── 영업팀장 견적 ID 생성 ─────────────────────────────────────────
+// 거래처 요청 연동 시: {reqId}-{순번2자리}  예) 한솔-7890-01-01
+// 직접 작성 시: {거래처명}-{사업자번호뒤4자리}-{순번2자리}
+export async function generateSalesQuoteId(
+  clientName: string,
+  bizNo: string,
+  linkedRequestId?: string,
+): Promise<string> {
+  if (linkedRequestId) {
+    const { data } = await supabase
+      .from('quote_requests')
+      .select('request_id')
+      .like('request_id', `${linkedRequestId}-%`)
+      .order('request_id', { ascending: false })
+      .limit(1);
+    const lastSeq = data?.[0]?.request_id
+      ? parseInt(data[0].request_id.split('-').pop() || '0', 10)
+      : 0;
+    const seq = String(lastSeq + 1).padStart(2, '0');
+    return `${linkedRequestId}-${seq}`;
+  }
+  return generateRequestId(clientName, bizNo);
+}
