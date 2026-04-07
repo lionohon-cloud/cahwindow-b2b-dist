@@ -33,14 +33,17 @@ interface Props {
   setGrades: (g: Record<string, string>) => void;
   prices?: QuotePrices | null;         // 산식 결과 (없으면 가격 숨김)
   coupons?: Array<{ name: string; rate: number; amt: number }>;
+  demolitionFee?: number;  // #11 철거비
+  boyangFee?: number;      // #10 보양비
 }
 
-export default function BrandCards({ grades, setGrades, prices, coupons = [] }: Props) {
+export default function BrandCards({ grades, setGrades, prices, coupons = [], demolitionFee = 0, boyangFee = 0 }: Props) {
   const hasCoupon = coupons.length > 0;
+  const extraFee  = demolitionFee + boyangFee;
 
   return (
     <div className="card">
-      <div className="section-title">③ 브랜드 / 등급 선택</div>
+      <div className="section-title">④ 브랜드 / 등급 선택</div>
       <p style={{ fontSize: 13, color: 'var(--color-text-muted)', marginBottom: 16 }}>
         원하시는 브랜드와 등급을 선택해 주세요. 복수 선택 가능합니다.
       </p>
@@ -49,10 +52,11 @@ export default function BrandCards({ grades, setGrades, prices, coupons = [] }: 
           const color    = BRAND_COLORS[brand];
           const selected = grades[brand] ?? '';
           const priceKey = BRAND_PRICE_KEY[brand];
-          const final    = prices?.final[priceKey] ?? 0;
-          const supply   = prices?.supplyAmt[priceKey] ?? 0;
-          const vat      = prices?.vat[priceKey] ?? 0;
-          const disc     = prices?.couponDisc[priceKey] ?? 0;
+          const final           = prices?.final[priceKey] ?? 0;
+          const supply          = prices?.supplyAmt[priceKey] ?? 0;
+          const vat             = prices?.vat[priceKey] ?? 0;
+          const disc            = prices?.couponDisc[priceKey] ?? 0;
+          const finalWithExtra  = final > 0 ? final + extraFee : 0;
           const showPrice = !!prices && !!selected;
 
           return (
@@ -64,7 +68,7 @@ export default function BrandCards({ grades, setGrades, prices, coupons = [] }: 
                 </span>
                 {showPrice && (
                   <span style={{ fontSize: 15, fontWeight: 800, color: selected ? '#fff' : color }}>
-                    {fmtKRW(final)}원 <span style={{ fontSize: 11, fontWeight: 400, opacity: 0.85 }}>(VAT포함)</span>
+                    {fmtKRW(finalWithExtra)}원 <span style={{ fontSize: 11, fontWeight: 400, opacity: 0.85 }}>(VAT포함)</span>
                   </span>
                 )}
               </div>
@@ -121,13 +125,25 @@ export default function BrandCards({ grades, setGrades, prices, coupons = [] }: 
                       <span style={{ color: 'var(--color-text-muted)' }}>공급가액</span>
                       <span>{fmtKRW(supply)}원</span>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: demolitionFee > 0 || boyangFee > 0 ? 4 : 6 }}>
                       <span style={{ color: 'var(--color-text-muted)' }}>부가세 (10%)</span>
                       <span>{fmtKRW(vat)}원</span>
                     </div>
+                    {demolitionFee > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <span style={{ color: 'var(--color-text-muted)' }}>철거비</span>
+                        <span>{fmtKRW(demolitionFee)}원</span>
+                      </div>
+                    )}
+                    {boyangFee > 0 && (
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                        <span style={{ color: 'var(--color-text-muted)' }}>보양비</span>
+                        <span>{fmtKRW(boyangFee)}원</span>
+                      </div>
+                    )}
                     <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 6, borderTop: `1px solid var(--color-border)` }}>
                       <span style={{ fontWeight: 700 }}>예상 합계 (VAT포함)</span>
-                      <span style={{ fontWeight: 800, fontSize: 15, color }}>{fmtKRW(final)}원</span>
+                      <span style={{ fontWeight: 800, fontSize: 15, color }}>{fmtKRW(finalWithExtra)}원</span>
                     </div>
                   </div>
                 )}

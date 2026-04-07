@@ -56,6 +56,14 @@ function QuoteContent() {
   ]);
   const [grades, setGrades] = useState<Record<string, string>>(DEFAULT_GRADES);
 
+  // #9 #11 철거 (기본값: 체크)
+  const [needsDemolition, setNeedsDemolition] = useState(true);
+  // #10 보양
+  const [needsBoyang, setNeedsBoyang]         = useState(false);
+  // #12 인테리어 진행 여부
+  const [interiorType, setInteriorType]       = useState('거주창호만');
+  const [interiorNote, setInteriorNote]       = useState('');
+
   // 가격 재계산 디바운스 타이머
   const calcTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -114,6 +122,12 @@ function QuoteContent() {
           siteSido, constType, resType,
           wishDate: wishDate || undefined,
           items: validItems, grades, memo,
+          options: {
+            needsDemolition,
+            needsBoyang,
+            boyangQty: needsBoyang ? validQty : 0,
+            interiorType: interiorType === '비고' ? (interiorNote.trim() || '비고') : interiorType,
+          },
         }),
       });
       const data = await res.json();
@@ -172,6 +186,11 @@ function QuoteContent() {
 
   const isReadonly     = !!clientId;
   const selectedBrands = Object.entries(grades).filter(([, g]) => !!g).map(([b]) => b);
+
+  // 추가 요금 계산
+  const validQty      = items.filter((i) => i.nm.trim()).reduce((s, i) => s + i.qty, 0);
+  const demolitionFee = needsDemolition ? 200_000 : 0;
+  const boyangFee     = needsBoyang ? validQty * 20_000 : 0;
 
   return (
     <div style={{ minHeight:'100vh', paddingBottom:40 }}>
@@ -244,15 +263,71 @@ function QuoteContent() {
           wishDate={wishDate} setWishDate={setWishDate}
         />
 
-        {/* ③ 브랜드 / 등급 선택 + 가견적 금액 */}
+        {/* ③ 시공 옵션 */}
+        <div className="card">
+          <div className="section-title">③ 시공 옵션</div>
+
+          {/* #11 철거 */}
+          <label style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14, cursor:'pointer', userSelect:'none' }}>
+            <input type="checkbox" checked={needsDemolition} onChange={(e) => setNeedsDemolition(e.target.checked)}
+              style={{ width:18, height:18, cursor:'pointer', accentColor:'var(--color-primary)' }} />
+            <span>
+              <span style={{ fontWeight:600, fontSize:14 }}>창호 철거가 필요한가요?</span>
+              <span style={{ marginLeft:8, fontSize:12, color:'var(--color-text-muted)' }}>
+                기본 철거비 200,000원 {needsDemolition ? '포함' : '미포함'}
+              </span>
+            </span>
+          </label>
+
+          {/* #10 보양 */}
+          <label style={{ display:'flex', alignItems:'center', gap:10, marginBottom:14, cursor:'pointer', userSelect:'none' }}>
+            <input type="checkbox" checked={needsBoyang} onChange={(e) => setNeedsBoyang(e.target.checked)}
+              style={{ width:18, height:18, cursor:'pointer', accentColor:'var(--color-primary)' }} />
+            <span>
+              <span style={{ fontWeight:600, fontSize:14 }}>보양이 필요한가요?</span>
+              <span style={{ marginLeft:8, fontSize:12, color:'var(--color-text-muted)' }}>
+                틀당 20,000원
+                {needsBoyang && validQty > 0 && ` × ${validQty}틀 = ${(validQty * 20000).toLocaleString('ko-KR')}원`}
+              </span>
+            </span>
+          </label>
+
+          {/* #12 인테리어 진행 여부 */}
+          <div>
+            <div style={{ fontWeight:600, fontSize:14, marginBottom:8 }}>인테리어 진행 여부</div>
+            <div style={{ display:'flex', gap:8, flexWrap:'wrap' }}>
+              {(['거주창호만', '인테리어 예정', '비거주창호만', '비고'] as const).map((opt) => (
+                <button key={opt} type="button"
+                  onClick={() => setInteriorType(opt)}
+                  style={{
+                    padding:'6px 16px', borderRadius:20, fontSize:13, cursor:'pointer', transition:'all .15s',
+                    border: `2px solid ${interiorType === opt ? 'var(--color-primary)' : 'var(--color-border)'}`,
+                    background: interiorType === opt ? 'var(--color-primary)' : '#fff',
+                    color: interiorType === opt ? '#fff' : 'var(--color-text)',
+                    fontWeight: interiorType === opt ? 700 : 500,
+                  }}>
+                  {opt}
+                </button>
+              ))}
+            </div>
+            {interiorType === '비고' && (
+              <input className="input" style={{ marginTop:10 }} value={interiorNote}
+                onChange={(e) => setInteriorNote(e.target.value)} placeholder="인테리어 관련 내용을 직접 입력해 주세요" />
+            )}
+          </div>
+        </div>
+
+        {/* ④ 브랜드 / 등급 선택 + 가견적 금액 */}
         <BrandCards
           grades={grades}
           setGrades={setGrades}
           prices={prices}
           coupons={linkInfo?.coupons}
+          demolitionFee={demolitionFee}
+          boyangFee={boyangFee}
         />
 
-        {/* ④ 품목 */}
+        {/* ⑤ 품목 */}
         <ItemTable
           items={items}
           setItems={setItems}
@@ -265,7 +340,7 @@ function QuoteContent() {
 
         {/* ⑤ 메모 */}
         <div className="card">
-          <div className="section-title">⑤ 메모 (선택)</div>
+          <div className="section-title">⑥ 메모 (선택)</div>
           <textarea className="input" value={memo} onChange={(e) => setMemo(e.target.value)}
             placeholder="요청사항, 특이사항 등 자유롭게 입력해 주세요." rows={3} />
         </div>

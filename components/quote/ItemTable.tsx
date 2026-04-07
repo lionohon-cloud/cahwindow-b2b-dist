@@ -60,7 +60,7 @@ export default function ItemTable({ items, setItems, itemPrices, selectedBrands 
   return (
     <div className="card">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-        <div className="section-title" style={{ marginBottom: 0 }}>④ 품목 입력</div>
+        <div className="section-title" style={{ marginBottom: 0 }}>⑤ 품목 입력</div>
         <button type="button" className="btn btn-secondary btn-sm" onClick={addRow}>+ 행 추가</button>
       </div>
 
@@ -98,6 +98,11 @@ export default function ItemTable({ items, setItems, itemPrices, selectedBrands 
 
                   {/* 품명 */}
                   <td>
+                    {item.nm.includes('발코니') && item.h >= 1900 && (
+                      <div style={{ fontSize:10, background:'#fef3c7', color:'#92400e', borderRadius:3, padding:'1px 5px', marginBottom:3, display:'inline-block' }}>
+                        사춤 자동적용
+                      </div>
+                    )}
                     {isCustom ? (
                       <div style={{ display: 'flex', gap: 3 }}>
                         <button type="button"
