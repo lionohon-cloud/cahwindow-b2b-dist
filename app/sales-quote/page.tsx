@@ -52,6 +52,7 @@ function SalesQuoteContent() {
 
   // ── reqId 배너 ──
   const [reqBanner, setReqBanner] = useState<{ requestId: string; clientName: string } | null>(null);
+  const [reqOptions, setReqOptions] = useState<Record<string, unknown> | null>(null);
   const [linkedRequestId, setLinkedRequestId] = useState<string>('');
 
   // ── 거래처 정보 ──
@@ -169,6 +170,9 @@ function SalesQuoteContent() {
         }
         setLinkedRequestId(req.request_id);
         setReqBanner({ requestId: req.request_id, clientName: req.client_name });
+        if (req.options && typeof req.options === 'object') {
+          setReqOptions(req.options as Record<string, unknown>);
+        }
       });
   }, [reqId, user]);
 
@@ -320,6 +324,33 @@ function SalesQuoteContent() {
             style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', fontSize: 18, color: '#9a3412' }}>
             ✕
           </button>
+        </div>
+      )}
+
+      {/* ─ 고객 시공 옵션 (reqId 로드 시) ─ */}
+      {reqBanner && reqOptions && (
+        <div style={{
+          background: '#fefce8', borderBottom: '2px solid #fde047',
+          padding: '10px 24px', display: 'flex', alignItems: 'center', gap: 20, flexWrap: 'wrap',
+        }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: '#713f12', flexShrink: 0 }}>📋 고객 요청사항</span>
+          {'needsDemolition' in reqOptions && (
+            <span style={{ fontSize: 13, color: '#78350f' }}>
+              철거: <strong>{reqOptions.needsDemolition ? '필요 (200,000원)' : '불필요'}</strong>
+            </span>
+          )}
+          {'needsBoyang' in reqOptions && (
+            <span style={{ fontSize: 13, color: '#78350f' }}>
+              보양: <strong>{reqOptions.needsBoyang
+                ? `필요 (${reqOptions.boyangQty}틀 × 20,000원)`
+                : '불필요'}</strong>
+            </span>
+          )}
+          {'interiorType' in reqOptions && (
+            <span style={{ fontSize: 13, color: '#78350f' }}>
+              인테리어: <strong>{reqOptions.interiorType as string}</strong>
+            </span>
+          )}
         </div>
       )}
 
