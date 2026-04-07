@@ -77,6 +77,26 @@ export default function RequestModal({ req, leaderName, onClose, onStatusChange 
             </div>
           )}
 
+          {/* 시공 옵션 */}
+          {req.options && Object.keys(req.options).length > 0 && (
+            <div style={{ marginBottom:20 }}>
+              <div style={{ fontWeight:700, fontSize:13, marginBottom:8, color:'var(--color-text-muted)' }}>시공 옵션</div>
+              {'needsDemolition' in req.options && (
+                <Row label="창호 철거"
+                  value={(req.options.needsDemolition ? '✅ 필요 (철거비 200,000원)' : '❌ 불필요')} />
+              )}
+              {'needsBoyang' in req.options && (
+                <Row label="보양"
+                  value={req.options.needsBoyang
+                    ? `✅ 필요 (${req.options.boyangQty}틀 × 20,000원 = ${((req.options.boyangQty as number) * 20000).toLocaleString('ko-KR')}원)`
+                    : '❌ 불필요'} />
+              )}
+              {'interiorType' in req.options && (
+                <Row label="인테리어" value={req.options.interiorType as string} />
+              )}
+            </div>
+          )}
+
           {/* 품목 */}
           {req.items?.length > 0 && (
             <div style={{ marginBottom:20 }}>
